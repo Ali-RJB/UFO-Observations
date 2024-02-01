@@ -1,0 +1,413 @@
+---
+title: "UFO Observations"
+format: html
+editor: visual
+toc: true
+toc-location: left
+theme: 
+  light: normal
+  dark: darkly
+toc-title: Road-Map
+---
+
+# **UFO Database**
+
+## **Original Database**
+
+Unidentified Flying Objects, or UFOs, have captivated human imagination for centuries. While the scientific consensus is that most UFO sightings can be explained by natural phenomena, a persistent minority of reports remain unexplained. For those seeking to understand the nature of UFOs, databases of UFO sightings offer a valuable resource. These databases compile reports of UFO encounters from around the world, providing a wealth of information on the frequency, location, and characteristics of these sightings.
+
+Here is the link to the UFO sighting database that has published by tidytuesday on Github:
+
+[UFO_Sightings](https://github.com/rfordatascience/tidytuesday/blob/master/data/2023/2023-06-20/readme.md){.uri}
+
+**Why I Choose a UFO Database?**
+
+UFO database offer several advantages for those like me interested in exploring this topic. It provide a centralized location to access a large number of UFO reports, making it easier to identify patterns and trends. It also allows me to filter and search reports based on various criteria, such as date, location, and timings. This granularity can help me focus on specific aspects of the UFO phenomenon.
+
+## **Transformed Database**
+
+I cleaned and prepared the original database of UFO sightings by:
+
+-   removing some variables that has no effect on our analysis. (e.g. ***has_images*** has no effect in our plots since all of the records includes ***False*** value in this variable.)
+
+-   Create ***reported_minutes*** which stands for the duration of observations in minutes not seconds to be more sensible since the original database had this variable in seconds.
+
+-   Create ***posted_year*** and ***posted_month*** by separating the reported date since it was reported as date-time format.
+
+-   Create ***day_part*** new variable based on the original one which had 10 different values but I reduced it into 4 main categories (e.g. we know that astronomical dusk is happening in the evening so I put it in evening category and so on...)
+
+-   Create ***continent*** from different countries (about 153 number of countries) so that it could be more easier to interpret the location of observations.
+
+I have uploaded this ***ufo_final*** file for your attention in the link below on Github:
+
+[UFO-Observations Transformed Data](https://github.com/Ali-RJB/UFO-Observations)
+
+```{r}
+#| echo: false
+library(tidyverse)
+ufo_final <- read_csv(file = "ufo_final.csv")
+```
+
+```{css}
+#| echo: false
+body.quarto-light {
+  background-color: #d8e2dc;
+}
+body.quarto-dark {
+  background-color: #354f52;
+}
+i.bi::before {
+    display: table-caption !important;
+    height: 2rem !important;
+    width: 2rem !important;
+    content: "" !important;
+    background-repeat: no-repeat !important;
+    background-size: 2rem 2rem !important;
+    position: sticky !important;
+    top: 1rem !important;
+}
+h1.title {
+    text-align: center;
+    color: crimson
+}
+
+```
+
+# **Interpretation and Plots**
+
+## **Density of Occurrence**
+
+### **Density of Occurrences from 1998 to 2023**
+
+The first question is that what is going on here in each year. right?
+
+We want to know how many observations have been reported in different years from 1998 to 2023 and how is the density of UFO occurrence in these years.
+
+```{r}
+ufo_final |>
+  ggplot(aes(x = posted_year)) +
+    geom_density(color = "#1572A1", linewidth = 2, fill = "#1572A1", alpha = 0.5) +
+  labs( y = "Density",
+       x = "Year",
+       title = "Density of occurrence from 1998 to 2023",
+       ) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+We can assume that most of the observations have reported in 2014. I wish I were in that time again and were in most reported countries to see one!
+
+### **Number of Occurrences in Different Continents**
+
+Let's go a little bit deeper and see how were the reporting in different continents from 1998 to 2023.
+
+1.  the first question is that which continent has the most number of reported observations in these days:
+
+    ```{r}
+    ufo_final |>
+      ggplot(aes(y = fct_infreq(continent))) +
+      geom_bar(fill = "#1572A1") +
+      labs(y = "Continents",
+           x = "Number of occurrence",
+           title = "Number of occurrence in different continents") +
+      theme(plot.title = element_text(hjust = 0.5),
+            plot.subtitle = element_text(hjust = 0.5),
+            plot.caption = element_text(hjust = 0.5))
+    ```
+
+    Wow! It seems that all most all the observations were from North America meaning it has the main effect of occurrences in whole plots.
+
+2.  But still, Lets see the occurrence separately in each continent:
+
+    ```{r}
+    ufo_final |>
+      ggplot(aes(posted_year)) +
+      geom_density(color = "#1572A1", linewidth = 2, fill = "#1572A1", alpha = 0.5) +
+      facet_wrap(~continent) +
+      labs(y = "Density",
+           x = "Year",
+           title = "Density of occurrence in different continents from 1998 to 2023") +
+      theme(plot.title = element_text(hjust = 0.5),
+            plot.subtitle = element_text(hjust = 0.5),
+            plot.caption = element_text(hjust = 0.5))
+    ```
+
+    As we can see most observations in North America, Asia and Africa is around 2014.
+
+### **Density of Occurrences in Each Months**
+
+Now the question is how was the frequency of observations in each month and each continents:
+
+```{r}
+ufo_final |>
+  ggplot(aes(posted_year)) +
+  geom_density(color = "#1572A1", linewidth = 2, fill = "#1572A1", alpha = 0.5) +
+  facet_wrap(~ posted_month) +
+  labs(y = "Density",
+       x = "Year",
+       title = "Density of occurrence in each month") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+Based on this graph we can easily figure out that number of occurrences is decreasing in each month meaning we only have better chances on March as it seems we have better chances of UFO observation on March rather all over the world.
+
+## **Duration of Observations**
+
+```{r}
+ufo_final |>
+  ggplot(aes(posted_year,reported_minute)) +
+  geom_smooth(se = FALSE, color = "#1572A1", linewidth = 2) +
+  labs(y = "Duration(minutes)",
+       x = "Year",
+       title = "Duration of occurrence from 1998 to 2023") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**It seems that duration of observations are incredibly reduced during this time so we can conclude maybe if we have a chance of seeing a UFO , we expect to it to be short on time! Especially shorter than before.**
+
+```{r}
+ufo_final |>
+  ggplot(aes(posted_year, reported_minute)) +
+  geom_smooth(se = FALSE, color = "#1572A1", linewidth = 2) +
+  facet_wrap(~ continent) +
+  labs(y = "Duration(minutes)",
+       x = "Year",
+       title = "Duration of occurrences from 1998 to 2023") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**This plot illustrates that duration of this reported objects has still remaining the same in North America and Asia. It seems people from these continents have chance of seeing UFO in more duration if they can hunt one!**
+
+## **Time of the Day**
+
+Now we have information to present number of occurrences based on time of the day.
+
+### Observations in different parts of the day
+
+```{r}
+ufo_final |>
+  ggplot(aes(x = fct_infreq(day_part))) +
+  geom_bar(fill = "#1572A1") +
+  labs(y = "Number of Observations",
+       x = "Part of the Day",
+       title = "Observations in different parts of the day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**The chart represents the most important time to have the chance of seeing a UFO is at nights and then in evenings. So it is better to keep your heads up after work!**
+
+### Observations in different parts of the day
+
+```{r}
+ufo_final |>
+  ggplot(aes(x = posted_year,
+             color= fct_rev(fct_infreq(day_part)),
+             fill= fct_rev(fct_infreq(day_part))
+             )) +
+  geom_bar() +
+  scale_fill_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87")) +
+  scale_color_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87"))+
+  theme_classic() +
+  labs(y = "Number of Observations",
+       x = "Year",
+       title = "Observations in different parts of the day from 1998 to 2023",
+       fill="Part of the Day",
+       color= "Part of the Day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**Although number of observations has been decreased in recent years but in every year the numbers of reported objects were always higher in at nights and then in the evenings.**
+
+# **Conclusion**
+
+## **Main Goal**
+
+From the information that has been collected from 1998 to 2023 we want to have some insights about 2024. Since almost all of the people are curious about aliens existence and we aim to tell you where and when would be a better chance to see a UFO. As we mentioned before most of the plots are influenced by North America and it would be better to have a precise look in each continent and send a special message to the people of each continent.
+
+### **North America**
+
+```{r}
+#| echo: false
+month_names <- list(
+  "1" = "January",
+  "2" = "February",
+  "3" = "March",
+  "4" = "April",
+  "5" = "May",
+  "6" = "June",
+  "7" = "July",
+  "8" = "August",
+  "9" = "September",
+  "10" = "October",
+  "11" = "November",
+  "12" = "December"
+)
+month_labeller <- function(variable,value){
+  return(month_names[value])
+}
+```
+
+Let's look at this continent precisely:
+
+```{r}
+ufo_final |> filter(continent == "North_America") |>
+  ggplot(aes(x = posted_year,
+             color= fct_rev(fct_infreq(day_part)),
+             fill= fct_rev(fct_infreq(day_part))
+             )) +
+  geom_bar() +
+  scale_fill_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87")) +
+  scale_color_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87"))+
+  theme_classic() +
+  facet_wrap(~posted_month,labeller = month_labeller) +
+  labs(y = "Number of Observations",
+       x = "Year",
+       title = "Observations in North America from 1998 to 2023",
+       fill="Part of the Day",
+       color= "Part of the Day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**Although in this continent we have possibility of observing UFO but it seems that the most important months to hunt one would be February, March, September and December and we have a better chance to see a UFO at nights and in evenings.**
+
+### **South America**
+
+```{r}
+ufo_final |> filter(continent == "South_America") |>
+  ggplot(aes(x = posted_year,
+             color= fct_rev(fct_infreq(day_part)),
+             fill= fct_rev(fct_infreq(day_part))
+             )) +
+  geom_bar() +
+  scale_fill_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87")) +
+  scale_color_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87"))+
+  theme_classic() +
+  facet_wrap(~posted_month,labeller = month_labeller) +
+  labs(y = "Number of Observations",
+       x = "Year",
+       title = "Observations in South America from 1998 to 2023",
+       fill="Part of the Day",
+       color= "Part of the Day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+Wow!
+
+**It is quite interesting since on January and October people have a better chance to observe a UFO at nights, on February in the afternoon, on November in the afternoon and evening and finally on March in the morning!**
+
+### **Europe**
+
+```{r}
+ufo_final |> filter(continent == "Europe") |>
+  ggplot(aes(x = posted_year,
+             color= fct_rev(fct_infreq(day_part)),
+             fill= fct_rev(fct_infreq(day_part))
+             )) +
+  geom_bar() +
+  scale_fill_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87")) +
+  scale_color_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87"))+
+  theme_classic() +
+  facet_wrap(~posted_month,labeller = month_labeller) +
+  labs(y = "Number of Observations",
+       x = "Year",
+       title = "Observations in Europe from 1998 to 2023",
+       fill="Part of the Day",
+       color= "Part of the Day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**European people must know that they would have a better chance of observing a UFO on March, September and you would have a better chance at nights and in the evenings.**
+
+### **Asia**
+
+Let's look at Asia:
+
+```{r}
+ufo_final |> filter(continent == "Asia") |>
+  ggplot(aes(x = posted_year,
+             color= fct_rev(fct_infreq(day_part)),
+             fill= fct_rev(fct_infreq(day_part))
+             )) +
+  geom_bar() +
+  scale_fill_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87")) +
+  scale_color_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87"))+
+  theme_classic() +
+  facet_wrap(~posted_month,labeller = month_labeller) +
+  labs(y = "Number of Observations",
+       x = "Year",
+       title = "Observations in Asia from 1998 to 2023",
+       fill="Part of the Day",
+       color= "Part of the Day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**It seems that March, April, June, September and December are the most important moths in this case and mostly at nights Asian people have a better chance to see a UFO.**
+
+### **Africa**
+
+```{r}
+ufo_final |> filter(continent == "Africa") |>
+  ggplot(aes(x = posted_year,
+             color= fct_rev(fct_infreq(day_part)),
+             fill= fct_rev(fct_infreq(day_part))
+             )) +
+  geom_bar() +
+  scale_fill_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87")) +
+  scale_color_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87"))+
+  theme_classic() +
+  facet_wrap(~posted_month,labeller = month_labeller) +
+  labs(y = "Number of Observations",
+       x = "Year",
+       title = "Observations in Africa from 1998 to 2023",
+       fill="Part of the Day",
+       color= "Part of the Day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**It looks like in Africa people have better chance on February at nights and on March in mornings and evenings.**
+
+### **Oceania**
+
+```{r}
+ufo_final |> filter(continent == "Oceania") |>
+  ggplot(aes(x = posted_year,
+             color= fct_rev(fct_infreq(day_part)),
+             fill= fct_rev(fct_infreq(day_part))
+             )) +
+  geom_bar() +
+  scale_fill_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87")) +
+  scale_color_manual(values = c("#F3B95F","#86A7FC","#910A67","#43766C","#647D87"))+
+  theme_classic() +
+  facet_wrap(~posted_month,labeller = month_labeller) +
+  labs(y = "Number of Observations",
+       x = "Year",
+       title = "Observations in Oceania from 1998 to 2023",
+       fill="Part of the Day",
+       color= "Part of the Day") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5))
+```
+
+**It seems in this continent the best chance would be on March and December at nights and in afternoons.**
